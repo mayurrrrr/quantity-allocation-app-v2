@@ -375,7 +375,7 @@ with st.sidebar:
     # Data source
     data_file = st.selectbox(
         "Select data source:", 
-        ["data/merged_data_latest_with_lad_Inwr_add.xlsx", "data/df.csv"],
+        ["data/df.csv"],
         index=0
     )
     
