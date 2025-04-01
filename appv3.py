@@ -385,7 +385,7 @@ with st.sidebar:
         "Prediction calibration factor", 
         min_value=0.4, 
         max_value=1.0, 
-        value=0.63,  # Default to 0.8 (20% reduction)
+        value=0.62,  # Default to 0.8 (20% reduction)
         step=0.02,
         help="Adjust this to match predictions with Colab results (lower = smaller predictions)"
     )
