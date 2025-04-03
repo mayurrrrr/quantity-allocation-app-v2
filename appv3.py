@@ -182,6 +182,9 @@ def get_last_observations(df: pd.DataFrame, selected_styles: List[str]):
         # Filter to only records whose "Style Number" is in selected_styles
         desired_details = df_item_details[df_item_details["Style Number"].isin(selected_styles)]
         
+        # FIX: Remove duplicates in desired_details to prevent multiplication during merge
+        desired_details = desired_details.drop_duplicates(subset=['ITEM', 'Platform'])
+        
         # Get all lag features needed for prediction
         lag_features = ['lag_1', 'lag_2', 'lag_3', 'Month', 'Year', 'Retail Price']
         
@@ -375,7 +378,7 @@ with st.sidebar:
     # Data source
     data_file = st.selectbox(
         "Select data source:", 
-        ["data/df.csv"],
+        ["data/dfupdate.csv"],
         index=0
     )
     
@@ -534,7 +537,14 @@ if selected_styles:
         
         # Process predictions to match Colab format
         results_df = process_predictions(predictions)
-        
+
+        # Debug info - show counts before merge
+        if st.session_state.debug_mode:
+            st.write(f"Results shape before merge: {results_df.shape}")
+            st.write(f"Desired details shape: {desired_details.shape}")
+            st.write(f"Number of unique (ITEM, Platform) pairs in results: {results_df[['ITEM', 'Platform']].drop_duplicates().shape[0]}")
+            st.write(f"Number of unique (ITEM, Platform) pairs in details: {desired_details[['ITEM', 'Platform']].drop_duplicates().shape[0]}")
+
         # Merge with desired details to get style info
         detailed_results = pd.merge(
             results_df,
@@ -542,6 +552,15 @@ if selected_styles:
             on=["ITEM", "Platform"],
             how="left"
         )
+
+        # FIX: Remove any duplicates that might have been created during the merge
+        detailed_results = detailed_results.drop_duplicates(subset=['ITEM', 'Platform', 'Style Number'])
+
+        # Debug info - show counts after merge
+        if st.session_state.debug_mode:
+            st.write(f"Results shape after merge and deduplication: {detailed_results.shape}")
+            st.write(f"Total predicted before: {results_df['Total_3m'].sum()}")
+            st.write(f"Total predicted after: {detailed_results['Total_3m'].sum()}")
         
         if detailed_results.empty:
             st.error("No matching records found after merging.")
